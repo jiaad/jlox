@@ -118,7 +118,7 @@ public class Scanner {
     if(isAtEnd()) return false;
     if(source.charAt(current) != expected)
       return false;
-
+    // it advances only if it matches
     current++;
     return true;
   }
@@ -191,11 +191,17 @@ public class Scanner {
   }
 
   private void multilineComment(){
-    while(!("" + peek() + nextPeek()).equals("*/") && !isAtEnd()){
+    int commentCount = 1;
+    // while(true && !isAtEnd()){
+      while(commentCount > 0 && !isAtEnd()){
       if(peek() == '\n') line++;
+      if((""+peek() + nextPeek()).equals("/*"))
+        commentCount++;
+      if((""+peek() + nextPeek()).equals("*/"))
+        commentCount--;
       advance();
     }
-    advance();
+    // advance();
     advance(); // advance to finish the comment */
   }
 
