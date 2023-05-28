@@ -2,7 +2,7 @@
 
 
 SRC_DIR := src
-OUT_DIR := build/classes
+OUT_DIR := bin
 MAIN := 		com.craftinginterpreters.lox.Lox;
 TOOL_DIR := com.craftinginterpreters.tool.GenerateAst
 
@@ -21,7 +21,7 @@ run:
 	java -XX:+ShowCodeDetailsInExceptionMessages -cp $(OUT_DIR) $(MAIN)
 
 gen-ast:
-	java -XX:+ShowCodeDetailsInExceptionMessages -cp $(OUT_DIR) $(TOOL_DIR) .
+	java -XX:+ShowCodeDetailsInExceptionMessages -cp $(OUT_DIR) $(TOOL_DIR) src/com/craftinginterpreters/lox
 
 #java -XX:+ShowCodeDetailsInExceptionMessages -cp build/classes com.craftinginterpreters.tool.GenerateAst src/com/craftinginterpreters/lox
 # java -XX:+ShowCodeDetailsInExceptionMessages -cp $(OUT_DIR) com.craftinginterpreters.tool.GenerateAst src/com/craftinginterpreters/lox 
