@@ -1,10 +1,12 @@
 package com.craftinginterpreters.lox;
 
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.function.Consumer;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 public class Parser {
+  private static class ParseError extends RuntimeException {}
   private final List<Token> tokens;
   private int current = 0;
 
@@ -12,57 +14,153 @@ public class Parser {
     this.tokens= tokens;
   }
 
-  private Expr expression() {
+  // SYNCHRONIZE
+
+  private void synchronize(){
+    advance();
+
+    while(!isAtEnd()){
+      if (previous().type == SEMICOLON) return ;
+
+      switch(peek().type){
+        case CLASS:
+        case FUN:
+        case VAR:
+        case FOR:
+        case IF:
+        case WHILE:
+        case PRINT:
+        case RETURN:
+          return;
+      }
+
+      advance();
+    }
+  }
+
+  Expr parse(){
+    try{
+      return expression();
+    }catch (ParseError error){
+      return null;
+    }
+  }
+
+  // expression => equality
+  // equality => comparison (sign comparison)*
+  // comparison => term (sign term)*
+  // factor => unary (sign unary)*
+  // unary => sign unary | primary
+  // primary => NUMER | STRING | true | false | nil 
+    //| "(" expression ")"
+  Expr expression(){
     return equality();
   }
 
-  private Expr equality(){
+  Expr equality(){
     Expr expr = comparison();
-    while(match(BANG_EQUAL, EQUAL_EQUAL)){
-      Token operator = previous();
-      Expr right = comparison();
-      expr = new Expr.Binary(expr, operator, right);
+    while (match(BANG_EQUAL, EQUAL_EQUAL)) {
+    Token operator = previous(); // because it is incremented in match
+    Expr right = comparison();
+    expr = new Expr.Binary(expr, operator, right);
     }
-
     return expr;
   }
 
+  Expr comparison(){
+    Expr expr = term();
+    while(match(GREATER, LESS, GREATER_EQUAL, LESS_EQUAL)){
+      Token operator = previous(); // because it is incremented in match
+      Expr right = term();
+      expr = new Expr.Binary(expr, operator, right);
+    }
+    return expr;
+  }
 
-  // we must find !== ==
-  private boolean match(TokenType... types){
-    for(TokenType type : types){
-      if(check(type)){
-        advance();
-        return true;
-      }
+  Expr term(){
+    Expr expr = factor();
+    while(match(PLUS, MINUS)){
+      Token operator = previous(); // because it is incremented in match;
+      Expr right = factor();
+      expr = new Expr.Binary(expr, operator, right);
+    }
+    return expr;
+  }
+
+  Expr factor(){
+    Expr expr = unary();
+
+    while(match(SLASH, STAR)){
+      Token operator = previous(); // because it is incremented in match
+      Expr right = unary();
+      expr = new Expr.Binary(expr, operator, right);
+    }
+    return expr;
+  }
+
+  Expr unary(){
+    if(match(BANG, MINUS)){
+      Token operator = previous();
+      Expr right = unary();
+      return new Expr.Unary(operator, right);
+    }else {
+      return primary();
+    }
+  }
+
+  Expr primary(){
+    if(match(NIL)) return new Expr.Literal(NIL);
+    if(match(FALSE)) return new Expr.Literal(FALSE);
+    if(match(TRUE)) return new Expr.Literal(TRUE);
+
+    if(match(NUMBER, STRING)){
+      return new Expr.Literal(previous().Literal);
     }
 
-    return false;
-  }
-  // it checks if current type token is of given type
-  private boolean check(TokenType type){
-    if(isAtEnd()) return false;
-    return peek().type == type;
-  }
-
-  // consume the current token and return it
-  private Token advance(){
-    if(!isAtEnd()) current++;
-    return previous();
+    if(match(LEFT_PAREN)){
+      Expr expr = expression();
+      consume(RIGHT_PAREN, "Expected ')' after expression");
+      return new Expr.Grouping(expr);
+    }
+    
+    throw error(peek(), "Expected expression");
   }
 
-  // verify if it is the end of file
-  private boolean isAtEnd(){
-    return peek().type == EOF;
+  private Token consume(TokenType type, String message){
+    if(check(type)) return advance();
+    throw error(peek(), message);
   }
 
-  // next token
+  private boolean match(TokenType ...types){
+    boolean exist = Arrays.asList(types).contains(peek().type);
+    if(exist) advance();
+    return exist == true;
+  }
+
   private Token peek(){
     return tokens.get(current);
+  }
+
+  private boolean check(TokenType type){
+    return peek().type == type;
   }
 
   // current token after increùenting the current
   private Token previous(){
     return tokens.get(current - 1);
+  }
+
+  private Token advance(){
+    if(!isAtEnd()) current++;
+    return previous();
+  }
+
+  private boolean isAtEnd(){
+    return peek().type == EOF;
+  } 
+
+  private ParseError error(Token token, String message){
+    Lox.error(token, message);
+    return new ParseError();
   }
 }
