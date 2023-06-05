@@ -140,7 +140,7 @@ public class Scanner {
   private void string(){
     // if not null
     while(peek() != '"' && !isAtEnd()){
-      if(peek() == '\n') advance();
+      if(peek() == '\n') line++;
       advance();
     }
 
