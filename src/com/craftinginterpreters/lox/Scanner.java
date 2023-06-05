@@ -1,5 +1,6 @@
 package com.craftinginterpreters.lox;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,14 +44,14 @@ public class Scanner {
     this.source = source;
   }
   private void scanToken(){
-    skipWhiteSpaces();
+    // skipWhiteSpaces();
     char c = advance();
     switch(c){
       // skip spaces tab
-      // case ' ':
-      // case '\r':
-      // case '\t':
-      //   break;
+      case ' ':
+      case '\r':
+      case '\t':
+        break;
       case '\n': line++; break;
       case '"': string(); break;
       case '(': addToken(LEFT_PAREN); break;
@@ -83,7 +84,7 @@ public class Scanner {
       else if(isDigit(c))
         number();
       else
-        Lox.error(line, "Uexpected character");
+        Lox.error(line, " Uexpected character -> " + c);
       break;
     }
   }
@@ -112,7 +113,10 @@ public class Scanner {
   }
 
   private char advance(){
-    return source.charAt(current++); // post increment
+    if(!isAtEnd()){
+      return source.charAt(current++); // post increment
+    }
+    return '\0';
   }
   private boolean match(char expected){
     if(isAtEnd()) return false;
@@ -207,12 +211,20 @@ public class Scanner {
 
   private void skipWhiteSpaces(){
     // char[] cases = new char[]{' ', '\t', '\r'};
-    // while(peek() == ' ' || peek() == '\t' || peek() == '\r')
-    while(source.charAt(current) == ' ' || source.charAt(current) == '\t' || source.charAt(current) == '\r' || source.charAt(current) == '\n'){
+    while(isSpace(peek()) && !isAtEnd()){
       // System.out.println("-");
+      if(peek() == '\n') line++;
       advance();
     }
     start = current;
     // advance();
+  }
+
+  private boolean isSpace(char c){
+    Character[] spaces = {' ', '\n', '\t', '\r'};
+    ArrayList<Character> spacess = new ArrayList<>();
+    spacess.addAll(Arrays.asList(spaces));
+    return spacess.contains(c);
+    //.contains("oad")
   }
 }

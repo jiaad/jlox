@@ -21,7 +21,8 @@ public class Lox {
     } else if (args.length == 1){
       runFile(args[0]);
     }else {
-      runPrompt();
+      runFile("test.jlox");
+      // runPrompt();
     }
   }
   private static void runFile(String path) throws IOException {
@@ -46,12 +47,11 @@ public class Lox {
   private static void run(String source){
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
-    // Parser parser = new Parser(tokens);
-    // Expr expression = parser.parse();
-
+    Parser parser = new Parser(tokens);
+    List<Stmt> statements = parser.parse();
     if(hadError) return;
     // System.out.println(new AstPrinter().print(expression));
-    // interpreter.interpreter(expression);
+    interpreter.interpreter(statements);
     for (Token token : tokens) {
       System.out.println(token);
     }
@@ -69,7 +69,7 @@ public class Lox {
   }
 
   private static void report(int line, String where, String message){
-    System.err.println("[line" + line + "] Error " + where + ":" + message);
+    System.err.println("[line " + line + "] Error " + where + ":" + message);
     hadError = true;
   }
 

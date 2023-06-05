@@ -1,17 +1,20 @@
 package com.craftinginterpreters.lox;
 
-import java.sql.Time;
+import java.util.List;
 
-import org.hamcrest.core.IsEqual;
-
-public class Interpreter implements Expr.Visitor<Object> {
-  void interpreter(Expr expression){
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+  void interpreter(List<Stmt> statements){
     try {
-      Object value = evaluate(expression);
-      System.out.println(stringify(value));
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
     } catch (RunTimeError error) {
       Lox.runtimeError(error);
     }
+  }
+
+  private void execute(Stmt stmt){
+    stmt.accept(this);
   }
 
   private String stringify(Object object){
@@ -31,6 +34,20 @@ public class Interpreter implements Expr.Visitor<Object> {
   private Object evaluate(Expr expr){
     return expr.accept(this);
   }
+
+  @Override
+  public Void visitExpressionStmt(Stmt.Expression stmt){
+    evaluate(stmt.expression);
+    return null;
+  }
+
+  @Override
+  public Void visitPrintStmt(Stmt.Print stmt){
+    Object value = evaluate(stmt.expression);
+    System.out.println(stringify(value));
+    return null;
+  }
+
   @Override
   public Object visitLiteralExpr(Expr.Literal expr){
     return expr.value;
