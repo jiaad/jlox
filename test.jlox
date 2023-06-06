@@ -9,3 +9,7 @@ print (5 *4) + 4;
 
 print true;
 print "================================================";
+
+var jiad = "jiad"
+
+print jiad;

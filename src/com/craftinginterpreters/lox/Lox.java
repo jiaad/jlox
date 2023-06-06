@@ -21,8 +21,8 @@ public class Lox {
     } else if (args.length == 1){
       runFile(args[0]);
     }else {
-      runFile("test.jlox");
-      // runPrompt();
+      // runFile("test.jlox");
+      runPrompt();
     }
   }
   private static void runFile(String path) throws IOException {
@@ -50,6 +50,7 @@ public class Lox {
     Parser parser = new Parser(tokens);
     List<Stmt> statements = parser.parse();
     if(hadError) return;
+    System.out.println(statements);
     // System.out.println(new AstPrinter().print(expression));
     interpreter.interpreter(statements);
     for (Token token : tokens) {

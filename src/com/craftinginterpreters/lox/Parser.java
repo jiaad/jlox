@@ -3,7 +3,6 @@ package com.craftinginterpreters.lox;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.function.Consumer;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 public class Parser {
@@ -33,6 +32,7 @@ public class Parser {
         case PRINT:
         case RETURN:
           return;
+        default:
       }
 
       advance();

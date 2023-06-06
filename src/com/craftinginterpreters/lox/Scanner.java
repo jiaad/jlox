@@ -8,7 +8,6 @@ import java.util.Map;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 
-import java.util.ArrayList;
 
 
 public class Scanner {

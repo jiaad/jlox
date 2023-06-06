@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import static com.craftinginterpreters.lox.TokenType.*;
 import org.junit.Assert;
-import org.junit.Test;
 
 
 public class ScannerTest {
