@@ -9,6 +9,7 @@ public class Parser {
   private static class ParseError extends RuntimeException {}
   private final List<Token> tokens;
   private int current = 0;
+  private Environment environment = new Environment();
 
   Parser(List<Token> tokens){
     this.tokens= tokens;
@@ -49,17 +50,52 @@ public class Parser {
 List<Stmt>parse(){
     List<Stmt> statements = new ArrayList<>();
     while(!isAtEnd()){
-      statements.add(statement());
+      statements.add(declaration());
     }
     return statements;
     
 }
 
+private Stmt declaration(){
+  try {
+    if(match(VAR)) return varDeclaration();
+
+    return statement();
+  } catch (Exception e) {
+    // TODO: handle exception
+    synchronize();
+    return null;
+  }
+}
+
+private Stmt varDeclaration(){
+  Token name = consume(IDENTIFIER, "Expect variable name"); // it advances + give the previous
+  Expr initializer = null;
+  if(match(EQUAL)){
+    initializer = expression();
+  }
+  consume(SEMICOLON, "Expected semicolon after variable declaration");
+  return new Stmt.Var(name, initializer);
+}
+
 private Stmt statement(){
   if(match(PRINT)) return printStatement();
+  if(match(LEFT_BRACE)){
+    return new Stmt.Block(block());
+  }
   return expressionStatement();
 }
 
+private List<Stmt> block(){
+  List<Stmt> statements = new ArrayList<>();
+
+  while(!check(RIGHT_BRACE) && !isAtEnd()){
+    statements.add(declaration());
+  }
+
+  consume(RIGHT_BRACE, "Expected '}' at the end of the block");
+  return statements;
+}
 
 private Stmt printStatement(){
   Expr value = expression();
@@ -82,10 +118,30 @@ private Stmt expressionStatement(){
   // unary => sign unary | primary
   // primary => NUMER | STRING | true | false | nil 
     //| "(" expression ")"
+  //! MOST IMPORTANT FUNCTION TO GET THE EXPRESSIONS
   Expr expression(){
-    return equality();
+    return assignement();
   }
 
+
+
+  Expr assignement(){
+    Expr expr = equality();
+
+    if(match(EQUAL)){
+      Token equals =  previous();
+      // ASSIGNMENT IS RIGHT ASSICIATIVE 
+      // WE DONT LOOP BUT BUT WE RECURSIVELY CALL ASSIGNEMNT() TO PARSE RIGHT HAND SIDE
+      Expr value = assignement();
+
+      if(expr instanceof Expr.Variable){
+        Token name = ((Expr.Variable)expr).name;
+        return new Expr.Assign(name, value);
+      }
+      error(equals, "Invalid assignment Target.");
+    }
+    return expr;
+  }
   Expr equality(){
     Expr expr = comparison();
     while (match(BANG_EQUAL, EQUAL_EQUAL)) {
@@ -137,6 +193,14 @@ private Stmt expressionStatement(){
     }
   }
 
+  /**
+   * PRIMARY 
+   * true | false | nil
+   * NUMBER | STRING
+   * "(" expression ")"
+   * IDENTIFIER
+   * @return
+   */
   Expr primary(){
     if(match(NIL)) return new Expr.Literal(NIL);
     if(match(FALSE)) return new Expr.Literal(FALSE);
@@ -151,7 +215,11 @@ private Stmt expressionStatement(){
       consume(RIGHT_PAREN, "Expected ')' after expression");
       return new Expr.Grouping(expr);
     }
+
     
+    if(match(IDENTIFIER)){
+      return new Expr.Variable(previous());
+    }
     throw error(peek(), "Expected expression");
   }
 

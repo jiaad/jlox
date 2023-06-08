@@ -11,7 +11,7 @@ import java.util.List;
 // import java.util.Scanner;
 
 public class Lox {
-  private static final Interpreter interpreter = new Interpreter(); 
+  private static final Interpreter interpreter = new Interpreter();
   static boolean hadError = false;
   static boolean hadRunTimeError = false;
   public static void main(String[] args) throws IOException {
@@ -53,9 +53,9 @@ public class Lox {
     System.out.println(statements);
     // System.out.println(new AstPrinter().print(expression));
     interpreter.interpreter(statements);
-    for (Token token : tokens) {
-      System.out.println(token);
-    }
+    // for (Token token : tokens) {
+    //   System.out.println(token);
+    // }
   }
 
   static void error(Token token, String message){
