@@ -67,6 +67,17 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
+  public Void visitIfStmt(Stmt.If stmt){
+    // 1 -> evaluate the condition ex^ression;
+    if(isTruthy(evaluate(stmt.condition))){
+      execute(stmt.thenBranch);
+    }else if(stmt.elseBranch != null){
+      execute(stmt.elseBranch);
+    }
+    return null;
+  }
+
+  @Override
   public Object visitVariableExpr(Expr.Variable expr){
     return environment.get(expr.name);
   }
@@ -139,7 +150,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       checkNumberOperand(expr.operator, left, right);
         return (double)left <= (double)right;
       case BANG_EQUAL: return !isEqual(left, right);
-      case EQUAL_EQUAL: return !isEqual(left, right);
+      case EQUAL_EQUAL: return isEqual(left, right);
 
       default:
       break;

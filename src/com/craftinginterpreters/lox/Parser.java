@@ -12,7 +12,7 @@ public class Parser {
   private Environment environment = new Environment();
 
   Parser(List<Token> tokens){
-    this.tokens= tokens;
+    this.tokens = tokens;
   }
 
   // SYNCHRONIZE
@@ -83,6 +83,9 @@ private Stmt statement(){
   if(match(LEFT_BRACE)){
     return new Stmt.Block(block());
   }
+  if(match(IF)){
+    return ifStatement();
+  }
   return expressionStatement();
 }
 
@@ -95,6 +98,21 @@ private List<Stmt> block(){
 
   consume(RIGHT_BRACE, "Expected '}' at the end of the block");
   return statements;
+}
+
+private Stmt ifStatement(){
+  // stmt.condition
+  // stmt.than
+  // else
+  consume(LEFT_PAREN, "Expect '(' after 'if'.");
+  Expr condition = expression();
+  consume(RIGHT_PAREN, "Expect ')' after if condition.");
+  Stmt thanBranch = statement();
+  Stmt elseBranch = null;
+  if(match(ELSE)){
+    elseBranch = statement();
+  }
+  return new Stmt.If(condition, thanBranch, elseBranch);
 }
 
 private Stmt printStatement(){
