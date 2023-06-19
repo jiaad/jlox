@@ -21,7 +21,7 @@ public class Lox {
     } else if (args.length == 1){
       runFile(args[0]);
     }else {
-      runFile("./langtest/for.jlox");
+      runFile("./langtest/while.jlox");
       // runPrompt();
     }
   }

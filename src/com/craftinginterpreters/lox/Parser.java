@@ -12,6 +12,7 @@ public class Parser {
   private static class ParseError extends RuntimeException {}
   private final List<Token> tokens;
   private int current = 0;
+  private int loopdepth = 0;
   private Environment environment = new Environment();
 
   Parser(List<Token> tokens){
@@ -147,8 +148,14 @@ private Stmt whileStatement(){
   consume(LEFT_PAREN, "Expected '(' after 'while'");
   Expr condition = expression();
   consume(RIGHT_PAREN, "Expected ')' after condition");
-  Stmt body = statement();
-  return new Stmt.While(condition, body);
+
+  try {
+    loopdepth++;
+    Stmt body = statement();
+    return new Stmt.While(condition, body);
+  } finally {
+    loopdepth--;
+  }
 }
 
 private Stmt forStatement(){
@@ -174,25 +181,31 @@ private Stmt forStatement(){
     increment = expression();
 
   consume(RIGHT_PAREN, "Expected ')' after 'condition");
+  try {
+    loopdepth++;
 
-  Stmt body = statement();
+    Stmt body = statement();
 
-  // make it while loop in the core
-  if(increment != null){
-    body = new Stmt.Block(
-      Arrays.asList(body, new Stmt.Expression(increment))
-    );
+    // make it while loop in the core
+    if(increment != null){
+      body = new Stmt.Block(
+        Arrays.asList(body, new Stmt.Expression(increment))
+      );
+    }
+
+    if(condition == null){
+      condition = new Expr.Literal(true);
+    }
+    body = new Stmt.While(condition, body);
+
+    if(initializer != null){
+      body = new Stmt.Block(Arrays.asList(initializer, body));
+    }
+    return body;
+    
+  } finally{
+      loopdepth--;
   }
-
-  if(condition == null){
-    condition = new Expr.Literal(true);
-  }
-  body = new Stmt.While(condition, body);
-
-  if(initializer != null){
-    body = new Stmt.Block(Arrays.asList(initializer, body));
-  }
-  return body;
 }
 
 private Stmt breakStatement(){
