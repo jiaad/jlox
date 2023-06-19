@@ -9,6 +9,8 @@ abstract class Stmt{
     R visitPrintStmt(Print stmt);
     R visitVarStmt(Var stmt);
     R visitBlockStmt(Block stmt);
+    R visitWhileStmt(While stmt);
+    R visitBreakStmt(Break stmt);
   }
   static class Expression extends Stmt {
     Expression(Expr expression) {
@@ -81,6 +83,39 @@ abstract class Stmt{
     final List<Stmt> statements;
   }
 
+  static class While extends Stmt {
+    While(Expr condition, Stmt body) {
+      this.condition = condition;
+      this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+     return visitor.visitWhileStmt(this);
+    }
+
+    final Expr condition;
+    final Stmt body;
+  }
+
+  static class Break extends Stmt {
+    // Break(/*Expr condition, Stmt body*/) {
+      // this.condition = condition;
+      // this.body = body;
+    // }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+     return visitor.visitBreakStmt(this);
+    }
+
+    // final Expr condition;
+    // final Stmt body;
+  }
+
 
   abstract <R> R accept(Visitor<R> visitor);
 }
+
+
+// "for" "(" VarDec ";" Expr condition; Expr assignment ")" statement

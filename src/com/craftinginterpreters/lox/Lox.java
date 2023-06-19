@@ -21,8 +21,8 @@ public class Lox {
     } else if (args.length == 1){
       runFile(args[0]);
     }else {
-      // runFile("if.jlox");
-      runPrompt();
+      runFile("./langtest/for.jlox");
+      // runPrompt();
     }
   }
   private static void runFile(String path) throws IOException {

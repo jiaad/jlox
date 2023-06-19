@@ -2,6 +2,9 @@ package com.craftinginterpreters.lox;
 
 import java.util.Arrays;
 import java.util.List;
+
+import com.craftinginterpreters.lox.Stmt.Break;
+
 import java.util.ArrayList;
 
 import static com.craftinginterpreters.lox.TokenType.*;
@@ -86,6 +89,18 @@ private Stmt statement(){
   if(match(IF)){
     return ifStatement();
   }
+  if(match(WHILE)){
+    return whileStatement();
+  }
+
+  if(match(FOR)){
+    return forStatement();
+  }
+
+  if(match(BREAK)){
+    return breakStatement();
+  }
+
   return expressionStatement();
 }
 
@@ -128,6 +143,62 @@ private Stmt expressionStatement(){
   return new Stmt.Expression(expr);
 }
 
+private Stmt whileStatement(){
+  consume(LEFT_PAREN, "Expected '(' after 'while'");
+  Expr condition = expression();
+  consume(RIGHT_PAREN, "Expected ')' after condition");
+  Stmt body = statement();
+  return new Stmt.While(condition, body);
+}
+
+private Stmt forStatement(){
+  // for (int i = 0; i < array.length; i++) 
+  // for (;;) 
+  consume(LEFT_PAREN, "Expected '(' after 'for'");
+  Stmt initializer;
+  if(match(SEMICOLON)){
+    initializer = null;
+  } else if(match(VAR)){
+    initializer = varDeclaration();
+  } else {
+    initializer = expressionStatement();
+  }
+
+  Expr condition = null;
+  if(!check(SEMICOLON)){
+    condition = expression();
+  }
+  consume(SEMICOLON, "Expect ';' after loop condition.");
+  Expr increment = null;
+  if(!check(RIGHT_PAREN))
+    increment = expression();
+
+  consume(RIGHT_PAREN, "Expected ')' after 'condition");
+
+  Stmt body = statement();
+
+  // make it while loop in the core
+  if(increment != null){
+    body = new Stmt.Block(
+      Arrays.asList(body, new Stmt.Expression(increment))
+    );
+  }
+
+  if(condition == null){
+    condition = new Expr.Literal(true);
+  }
+  body = new Stmt.While(condition, body);
+
+  if(initializer != null){
+    body = new Stmt.Block(Arrays.asList(initializer, body));
+  }
+  return body;
+}
+
+private Stmt breakStatement(){
+  consume(SEMICOLON, "Expected ';' after break statement");
+  return new Stmt.Break();
+}
 
   // expression => equality
   // equality => comparison (sign comparison)*
@@ -144,7 +215,8 @@ private Stmt expressionStatement(){
 
 
   Expr assignement(){
-    Expr expr = equality();
+    // Expr expr = equality();
+    Expr expr = or();
 
     if(match(EQUAL)){
       Token equals =  previous();
@@ -160,6 +232,27 @@ private Stmt expressionStatement(){
     }
     return expr;
   }
+
+  Expr or(){
+    Expr expr = and();
+    while(match(OR)){
+      Token operator = previous();
+      Expr right = and();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+    return expr;
+  }
+
+  Expr and(){
+    Expr expr = equality();
+    while(match(AND)){
+      Token opertor = previous();
+      Expr right = equality();
+      expr = new Expr.Logical(expr, opertor, right);
+    }
+    return expr;
+  }
+
   Expr equality(){
     Expr expr = comparison();
     while (match(BANG_EQUAL, EQUAL_EQUAL)) {
@@ -220,9 +313,9 @@ private Stmt expressionStatement(){
    * @return
    */
   Expr primary(){
-    if(match(NIL)) return new Expr.Literal(NIL);
-    if(match(FALSE)) return new Expr.Literal(FALSE);
-    if(match(TRUE)) return new Expr.Literal(TRUE);
+    if(match(NIL)) return new Expr.Literal(null);
+    if(match(FALSE)) return new Expr.Literal(false);
+    if(match(TRUE)) return new Expr.Literal(true);
 
     if(match(NUMBER, STRING)){
       return new Expr.Literal(previous().Literal);
@@ -238,7 +331,9 @@ private Stmt expressionStatement(){
     if(match(IDENTIFIER)){
       return new Expr.Variable(previous());
     }
-    throw error(peek(), "Expected expression");
+
+
+    throw error(peek(), " - Expected expression - Implement");
   }
 
   private Token consume(TokenType type, String message){

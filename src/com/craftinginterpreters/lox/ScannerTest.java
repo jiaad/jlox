@@ -87,4 +87,35 @@ public class ScannerTest {
         Assert.assertEquals(expectedTokens.get(i).type, tokens.get(i).type);
       }
   }
+
+  @Test
+  public void testIfStmt() {
+    String source = "if(1 == 1) {print 2;}";
+    Scanner scanner = new Scanner(source);
+    List<Token> tokens = scanner.scanTokens();
+
+    List<Token> expectedTokens = Arrays.asList(
+      new Token(IF, "if", null, 1),
+      new Token(LEFT_PAREN, "(", null, 1),
+      new Token(NUMBER, "1", 1.0, 1),
+      new Token(EQUAL_EQUAL, "==", null, 1),
+      new Token(NUMBER, "1", 1.0, 1),
+      new Token(RIGHT_PAREN, ")", null, 1),
+      new Token(LEFT_BRACE, "{", null, 1),
+      new Token(PRINT, "print", null, 1),
+      new Token(NUMBER, "2", 2.0, 1),
+      new Token(SEMICOLON, ";", null, 1),
+      new Token(RIGHT_BRACE, "}", null, 1),
+      new Token(EOF, "", null, 1)
+      );
+
+
+      Assert.assertEquals(expectedTokens.size(), tokens.size());
+      for(int i = 0; i < tokens.size(); i++) {
+        Assert.assertEquals(expectedTokens.get(i).Literal, tokens.get(i).Literal);
+        Assert.assertEquals(expectedTokens.get(i).lexeme, tokens.get(i).lexeme);
+        Assert.assertEquals(expectedTokens.get(i).line, tokens.get(i).line);
+        Assert.assertEquals(expectedTokens.get(i).type, tokens.get(i).type);
+      }
+  }
 }

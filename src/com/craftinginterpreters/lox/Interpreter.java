@@ -61,8 +61,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
 
   @Override
-  public Void visitBlockStmt(Stmt.Block statement){
-    executeBlock(statement.statements, new Environment(environment));
+  public Void visitBlockStmt(Stmt.Block stmt){
+    executeBlock(stmt.statements, new Environment(environment));
     return null;
   }
 
@@ -76,6 +76,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     return null;
   }
+
+  @Override
+  public Void visitWhileStmt(Stmt.While stmt){
+    while(isTruthy(evaluate(stmt.condition))){
+      execute(stmt.body);
+    }
+    return null;
+  }
+
 
   @Override
   public Object visitVariableExpr(Expr.Variable expr){
@@ -158,9 +167,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     /// un reachable
     return null;
+  }
 
-
-
+  @Override
+  public Object visitLogicalExpr(Expr.Logical expr){
+    Object left = evaluate(expr.left);
+    if(expr.operator.type == TokenType.OR ){
+      if(isTruthy(left)) return left;
+    }else {
+      //! AND
+      // when isTruthy(left) is false the ! operator turns it in true, 
+      // so if it is false it will send the left which is false
+      // ekse 
+      if(isTruthy(left) == false) return left;
+    }
+    return evaluate(expr.right);
   }
 
   //! Assignemnt not allowed to create variable
