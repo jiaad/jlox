@@ -4,14 +4,39 @@ import java.util.List;
 
 abstract class Stmt{
   interface Visitor<R> {
+    R visitBlockStmt(Block stmt);
+    R visitBreakStmt(Break stmt);
     R visitExpressionStmt(Expression stmt);
+    R visitFunctionStmt(Function stmt);
     R visitIfStmt(If stmt);
     R visitPrintStmt(Print stmt);
     R visitVarStmt(Var stmt);
-    R visitBlockStmt(Block stmt);
     R visitWhileStmt(While stmt);
-    R visitBreakStmt(Break stmt);
   }
+  static class Block extends Stmt {
+    Block(List<Stmt> statements) {
+      this.statements = statements;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+     return visitor.visitBlockStmt(this);
+    }
+
+    final List<Stmt> statements;
+  }
+
+  static class Break extends Stmt {
+    Break() {
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+     return visitor.visitBreakStmt(this);
+    }
+
+  }
+
   static class Expression extends Stmt {
     Expression(Expr expression) {
       this.expression = expression;
@@ -23,6 +48,23 @@ abstract class Stmt{
     }
 
     final Expr expression;
+  }
+
+  static class Function extends Stmt {
+    Function(Token name, List<Token> params, List<Stmt> body) {
+      this.name = name;
+      this.params = params;
+      this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+     return visitor.visitFunctionStmt(this);
+    }
+
+    final Token name;
+    final List<Token> params;
+    final List<Stmt> body;
   }
 
   static class If extends Stmt {
@@ -70,19 +112,6 @@ abstract class Stmt{
     final Expr initializer;
   }
 
-  static class Block extends Stmt {
-    Block(List<Stmt> statements) {
-      this.statements = statements;
-    }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-     return visitor.visitBlockStmt(this);
-    }
-
-    final List<Stmt> statements;
-  }
-
   static class While extends Stmt {
     While(Expr condition, Stmt body) {
       this.condition = condition;
@@ -98,24 +127,6 @@ abstract class Stmt{
     final Stmt body;
   }
 
-  static class Break extends Stmt {
-    // Break(/*Expr condition, Stmt body*/) {
-      // this.condition = condition;
-      // this.body = body;
-    // }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-     return visitor.visitBreakStmt(this);
-    }
-
-    // final Expr condition;
-    // final Stmt body;
-  }
-
 
   abstract <R> R accept(Visitor<R> visitor);
 }
-
-
-// "for" "(" VarDec ";" Expr condition; Expr assignment ")" statement

@@ -11,11 +11,12 @@ import static com.craftinginterpreters.lox.TokenType.*;
 public class Parser {
   private static class ParseError extends RuntimeException {}
   private final List<Token> tokens;
-  private int current = 0;
   private int loopdepth = 0;
+  private int current = 0;
   private Environment environment = new Environment();
 
   Parser(List<Token> tokens){
+    loopdepth = 0;
     this.tokens = tokens;
   }
 
@@ -63,6 +64,7 @@ List<Stmt>parse(){
 private Stmt declaration(){
   try {
     if(match(VAR)) return varDeclaration();
+    if(match(FUN)) return function("function");
 
     return statement();
   } catch (Exception e) {
@@ -81,6 +83,29 @@ private Stmt varDeclaration(){
   consume(SEMICOLON, "Expected semicolon after variable declaration");
   return new Stmt.Var(name, initializer);
 }
+
+private Stmt.Function function(String kind){
+  Token name = consume(IDENTIFIER, "Expect "+  kind + " name.");
+  consume(IDENTIFIER, "Expect '(' after " + kind + " name");
+  List<Token> parameters = new ArrayList<>();
+  if(!check(TokenType.RIGHT_PAREN)){
+    do {
+      if(parameters.size() >= 255){
+        error(peek(), "Can't have more than 255 parameters.");
+      }
+
+      parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+    } while (match(COMMA));
+  }
+  consume(RIGHT_PAREN, "Expect ')' after parameters.");
+  consume(RIGHT_PAREN, "Expect '{' after before " + kind + " body");
+  // Function(Token name, List<Token> params, List<Stmt> body)
+
+
+  List<Stmt> body = block();
+  return new Stmt.Function(name, parameters, body);
+}
+
 
 private Stmt statement(){
   if(match(PRINT)) return printStatement();
@@ -102,6 +127,10 @@ private Stmt statement(){
     return breakStatement();
   }
 
+  // if(match(FUN)){
+  //   return funStatement();
+  // }
+
   return expressionStatement();
 }
 
@@ -112,7 +141,7 @@ private List<Stmt> block(){
     statements.add(declaration());
   }
 
-  consume(RIGHT_BRACE, "Expected '}' at the end of the block");
+  consume(RIGHT_BRACE, "Expected '}' at the end of the block"); // advances
   return statements;
 }
 
@@ -202,9 +231,9 @@ private Stmt forStatement(){
       body = new Stmt.Block(Arrays.asList(initializer, body));
     }
     return body;
-    
+
   } finally{
-      loopdepth--;
+      this.loopdepth--;
   }
 }
 
@@ -313,8 +342,35 @@ private Stmt breakStatement(){
       Expr right = unary();
       return new Expr.Unary(operator, right);
     }else {
-      return primary();
+      return call();
     }
+  }
+
+  Expr call(){
+    // call = primary ( ")" argumets* ")")*
+    Expr expr = primary();
+    while(true){
+      if(match(LEFT_PAREN)){
+        expr = finishCall(expr);
+      } else break;
+    }
+
+    return expr;
+  }
+
+  private Expr finishCall(Expr callee){
+  List<Expr> args = new ArrayList<Expr>();
+  // Argumts = expression ( ','expression')*
+  if(!check(RIGHT_PAREN)){
+    do{
+      if(args.size() >= 255){
+        error(peek(), "can't have more than 255 argumants");
+      }
+      args.add(expression());
+    }while(match(COMMA));
+  }
+  Token paren = consume(RIGHT_PAREN, "Expexted ')' after arguments"); /// it advanceds the token
+  return new Expr.Call(callee, paren, args);
   }
 
   /**

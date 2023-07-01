@@ -3,5 +3,13 @@
     "java.project.outputPath": "bin",
     "java.project.referencedLibraries": [
         "lib/**/*.jar"
-    ]
+    ],
+    "java.debug.settings.onBuildFailureProceed": true,
+    "C_Cpp.errorSquiggles": "enabled",
+    "files.associations": {
+        "*.html": "html",
+        "cstdio": "c",
+        "queue": "c",
+        "random": "c"
+    }
 }
