@@ -64,7 +64,7 @@ List<Stmt>parse(){
 private Stmt declaration(){
   try {
     if(match(VAR)) return varDeclaration();
-    if(match(FUN)) return function("function");
+    if(match(FUN)) return function("function"); // function declaration two type of functions
 
     return statement();
   } catch (Exception e) {
@@ -86,7 +86,7 @@ private Stmt varDeclaration(){
 
 private Stmt.Function function(String kind){
   Token name = consume(IDENTIFIER, "Expect "+  kind + " name.");
-  consume(IDENTIFIER, "Expect '(' after " + kind + " name");
+  consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
   List<Token> parameters = new ArrayList<>();
   if(!check(TokenType.RIGHT_PAREN)){
     do {
@@ -98,7 +98,7 @@ private Stmt.Function function(String kind){
     } while (match(COMMA));
   }
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
-  consume(RIGHT_PAREN, "Expect '{' after before " + kind + " body");
+  consume(LEFT_BRACE, "Expect '{' after before " + kind + " body");
   // Function(Token name, List<Token> params, List<Stmt> body)
 
 

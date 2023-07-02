@@ -77,6 +77,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     return null;
   }
 
+  // stock it in the environment
+  // this is not executing but storing
+  @Override
+  public Void visitFunctionStmt(Stmt.Function stmt){
+    LoxFunction function = new LoxFunction(stmt);
+    environment.define(stmt.name.lexeme, function);
+    return null;
+  }
+
   @Override
   public Void visitPrintStmt(Stmt.Print stmt){
     Object value = evaluate(stmt.expression);
@@ -284,7 +293,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     List<Object> arguments = new ArrayList<>();
 
     for(Expr argument: expr.arguments){
-      arguments.add(argument);
+      Object arg = evaluate(argument);
+      arguments.add(arg);
     }
 
     if(!(callee instanceof LoxCallable)){
