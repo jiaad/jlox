@@ -8,8 +8,62 @@
 //   print "hi mom";
 // }
 
-fun sayHi(first, last) {
-  print "Hi, " + first + " " + last + "!";
+// fun sayHi(first, last) {
+//   print "Hi, " + first + " " + last + "!";
+// }
+
+// sayHi("Dear", "Reader");
+// print clock();
+
+// fun count(n){
+//   while(n < 100){
+//     if(n == 3) return n;
+//     print n;
+//     n = n + 1;
+//   }
+// }
+
+// count(1);
+fun fib(n) {
+  if (n <= 1) return n;
+  return fib(n - 2) + fib(n - 1);
 }
 
-sayHi("Dear", "Reader");
+print "=== fib ===";
+for (var i = 0; i < 20; i = i + 1) {
+  print fib(i);
+}
+
+fun sum(n){
+  if(n <= 1) return 1;
+  return n + sum(n - 1);
+}
+print "=== sum ===";
+print sum(100);
+
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
+
+  return count;
+}
+
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "2".
+
+fun testFunExpr(fn){
+  fn("jiad is printed");
+}
+
+testFunExpr(fun (text){ print text;});
+
+fun scope(a){
+  var a = "local";
+  print a;
+}
+
+scope(12);

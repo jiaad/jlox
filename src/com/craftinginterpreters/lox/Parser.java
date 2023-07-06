@@ -13,6 +13,8 @@ public class Parser {
   private final List<Token> tokens;
   private int loopdepth = 0;
   private int current = 0;
+  private boolean allowxpression;
+  private boolean foundExpression = false;
   private Environment environment = new Environment();
 
   Parser(List<Token> tokens){
@@ -64,7 +66,10 @@ List<Stmt>parse(){
 private Stmt declaration(){
   try {
     if(match(VAR)) return varDeclaration();
-    if(match(FUN)) return function("function"); // function declaration two type of functions
+    if(check(FUN) && checkNext(IDENTIFIER)) {
+      consume(FUN, null);
+      return function("function"); // function declaration two type of functions
+    }
 
     return statement();
   } catch (Exception e) {
@@ -74,39 +79,6 @@ private Stmt declaration(){
   }
 }
 
-private Stmt varDeclaration(){
-  Token name = consume(IDENTIFIER, "Expect variable name"); // it advances + give the previous
-  Expr initializer = null;
-  if(match(EQUAL)){
-    initializer = expression();
-  }
-  consume(SEMICOLON, "Expected semicolon after variable declaration");
-  return new Stmt.Var(name, initializer);
-}
-
-private Stmt.Function function(String kind){
-  Token name = consume(IDENTIFIER, "Expect "+  kind + " name.");
-  consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
-  List<Token> parameters = new ArrayList<>();
-  if(!check(TokenType.RIGHT_PAREN)){
-    do {
-      if(parameters.size() >= 255){
-        error(peek(), "Can't have more than 255 parameters.");
-      }
-
-      parameters.add(consume(IDENTIFIER, "Expect parameter name."));
-    } while (match(COMMA));
-  }
-  consume(RIGHT_PAREN, "Expect ')' after parameters.");
-  consume(LEFT_BRACE, "Expect '{' after before " + kind + " body");
-  // Function(Token name, List<Token> params, List<Stmt> body)
-
-
-  List<Stmt> body = block();
-  return new Stmt.Function(name, parameters, body);
-}
-
-
 private Stmt statement(){
   if(match(PRINT)) return printStatement();
   if(match(LEFT_BRACE)){
@@ -114,6 +86,10 @@ private Stmt statement(){
   }
   if(match(IF)){
     return ifStatement();
+  }
+
+  if(match(RETURN)){
+    return returnStatement();
   }
   if(match(WHILE)){
     return whileStatement();
@@ -133,6 +109,45 @@ private Stmt statement(){
 
   return expressionStatement();
 }
+
+private Stmt varDeclaration(){
+  Token name = consume(IDENTIFIER, "Expect variable name"); // it advances + give the previous
+  Expr initializer = null;
+  if(match(EQUAL)){
+    initializer = expression();
+  }
+  consume(SEMICOLON, "Expected semicolon after variable declaration");
+  return new Stmt.Var(name, initializer);
+}
+
+private Stmt.Function function(String kind){
+  Token name = consume(IDENTIFIER, "Expect "+  kind + " name.");
+  
+  return new Stmt.Function(name, functionBody(kind));
+}
+
+private Expr.Function functionBody(String kind){
+  consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
+  List<Token> parameters = new ArrayList<>();
+  if(!check(TokenType.RIGHT_PAREN)){
+    do {
+      if(parameters.size() >= 255){
+        error(peek(), "Can't have more than 255 parameters.");
+      }
+
+      parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+    } while (match(COMMA));
+  }
+  consume(RIGHT_PAREN, "Expect ')' after parameters.");
+  consume(LEFT_BRACE, "Expect '{' after before " + kind + " body");
+  // Function(Token name, List<Token> params, List<Stmt> body)
+
+
+  List<Stmt> body = block();
+  return new Expr.Function(parameters, body);
+}
+
+
 
 private List<Stmt> block(){
   List<Stmt> statements = new ArrayList<>();
@@ -237,7 +252,22 @@ private Stmt forStatement(){
   }
 }
 
+private Stmt returnStatement(){
+  Token keyword = previous();
+  Expr value = null;
+  if(!check(SEMICOLON)){
+    value = expression();
+  }
+
+  consume(SEMICOLON, "Expect ';' after return value.");
+  // value -> return value
+  return new Stmt.Return(keyword, value);
+}
+
 private Stmt breakStatement(){
+  if(loopdepth == 0){
+    error(previous(), "Must be inside a loop to use 'break'.");
+  }
   consume(SEMICOLON, "Expected ';' after break statement");
   return new Stmt.Break();
 }
@@ -401,6 +431,8 @@ private Stmt breakStatement(){
       return new Expr.Variable(previous());
     }
 
+    if(match(FUN))
+      return functionBody("function");
 
     throw error(peek(), " - Expected expression - Implement");
   }
@@ -434,6 +466,11 @@ private Stmt breakStatement(){
     return previous();
   }
 
+  private boolean checkNext(TokenType tokenType){
+    if(isAtEnd()) return false;
+    if(tokens.get(current + 1).type == EOF) return false;
+    return tokens.get(current + 1).type == tokenType;
+  }
   private boolean isAtEnd(){
     return peek().type == EOF;
   } 

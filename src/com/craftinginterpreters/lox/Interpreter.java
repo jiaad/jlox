@@ -2,8 +2,10 @@ package com.craftinginterpreters.lox;
 
 import java.util.List;
 
-import com.craftinginterpreters.lox.Expr.Call;
-import com.craftinginterpreters.lox.Stmt.Break;
+// import com.craftinginterpreters.lox.Expr.Call;
+// import com.craftinginterpreters.lox.Stmt.Break;
+// import com.craftinginterpreters.lox.Stmt.Return;
+
 import java.util.ArrayList;
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   private static class BreakException extends RuntimeException {}
@@ -28,7 +30,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   final Environment globals = new Environment();
-  private Environment environment = new Environment();
+  private Environment environment = globals;
+
   void interpreter(List<Stmt> statements){
     try {
       for (Stmt statement : statements) {
@@ -47,9 +50,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     if(object == null) return "nil";
 
     if(object instanceof Double){
-      String text= object.toString();
+      String text = object.toString();
       if(text.endsWith(".0")){
-        text = text.substring(0, text.length( ) - 2);
+        text = text.substring(0, text.length() - 2);
       }
       return text;
     }
@@ -81,8 +84,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   // this is not executing but storing
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt){
-    LoxFunction function = new LoxFunction(stmt);
+    // current environment
+    // even inside recursive
+    // it is a function and inside there is another function, it will pass the block environment
+    LoxFunction function = new LoxFunction(stmt.name.lexeme,stmt.function, environment);
     environment.define(stmt.name.lexeme, function);
+
     return null;
   }
 
@@ -125,7 +132,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
     @Override
-  public Void visitBreakStmt(Break stmt) {
+  public Void visitBreakStmt(Stmt.Break stmt) {
     throw new BreakException();
   }
 
@@ -214,6 +221,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     return null;
   }
 
+  @Override 
+  public Object visitFunctionExpr(Expr.Function expr){
+    return new LoxFunction(null, expr, environment);
+  }
   @Override
   public Object visitLogicalExpr(Expr.Logical expr){
     Object left = evaluate(expr.left);
@@ -288,7 +299,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Object visitCallExpr(Call expr) {
+  public Object visitCallExpr(Expr.Call expr) {
     Object callee = evaluate(expr.callee);
     List<Object> arguments = new ArrayList<>();
 
@@ -307,6 +318,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       throw new RunTimeError(expr.paren, "Expexted " + function.arity() + " arguments but got " + arguments.size());
     }
     return function.call(this, arguments);
+  }
+
+  @Override
+  public Void visitReturnStmt(Stmt.Return stmt) {
+    Object value = null;
+    if(stmt.value != null) value = evaluate(stmt.value);
+
+    throw new Return(value);
   }
 
 

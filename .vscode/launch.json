@@ -26,7 +26,11 @@
       "name": "Lox",
       "request": "launch",
       "mainClass": "com.craftinginterpreters.lox.Lox",
-      "projectName": "jlox_7dfec56e"
+      "projectName": "jlox_7dfec56e",
+      "args": 
+      [
+          "./test.jlox"
+      ],
     },
     {
       "type": "java",
