@@ -1,8 +1,20 @@
-fun scope(a){
-  var a = "local";
-  var a = "local";
-  var a = "local";
-  print a;
-}
+// var pew = 90;
 
-scope(12);
+// fun scope(a){
+//   var z = "local";
+//   var b = "local";
+//   var c = "local";
+//   print a;
+// }
+
+// scope(12);
+
+var a = "outer";
+{
+  var b = "jiad";
+  {
+    var c = b;
+    print b;
+  }
+  // var a = a;
+}

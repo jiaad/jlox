@@ -51,7 +51,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
   }
 
-  private void resolveFunction(Stmt.Function stmt){
+  private void resolveFunction(Stmt.Function stmt, FunctionType type){
+    FunctionType enclosingFunction = currentFunction;
+    this.currentFunction = type;
     beginScope();
       // for(Token token : stmt.function.params){
       //   declare(token);
@@ -60,13 +62,20 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       resolveParameters(stmt.function.params);
       resolve(stmt.function.body);
     endScope();
+    this.currentFunction = enclosingFunction;
   }
-  private void declare(Token token){
+  private void declare(Token name){
     //? says that it exist\
     //? it adds to innermost variable
     //? it says sets false which mean it exist but not finished resolving
-    if(scopes.empty()) return;
-    scopes.peek().put(token.lexeme, false);
+    
+    if(scopes.empty()) return; // if not inside a block scope
+    
+    Map<String, Boolean> scope = scopes.peek();
+    if(scope.containsKey(name.lexeme)){
+      Lox.error(name, "Already a variable with this name in this scope.");
+    }
+    scope.put(name.lexeme, false);
   }
 
   private void define(Token token){
@@ -77,7 +86,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   private void resolveLocal(Expr expr, Token name){
-    //! if we don't find anything in the scope, we assune ie is global
+    //! if we don't find anything in the scope, we assune it is global
     for(int i = scopes.size() - 1; i >= 0; i--){
       if(scopes.get(i).containsKey(name.lexeme)){
         //? scopes.size() - 1 - i
@@ -139,7 +148,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     declare(stmt.name);
     define(stmt.name);
 
-    resolveFunction(stmt);
+    resolveFunction(stmt, FunctionType.FUNCTION);
     return null;
   }
 
@@ -151,6 +160,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitReturnStmt(Stmt.Return stmt){
+    if(currentFunction == FunctionType.NONE){
+      Lox.error(stmt.keyword, "can't return from top-level code.");
+    }
     if(stmt.value != null)
       resolve(stmt.value);
     return null;
@@ -221,7 +233,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   //! resolving variables
   @Override
   public Void visitVariableExpr(Expr.Variable expr){
-    if(!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == false){
+    if(!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE){
       //?? i understood, si le expr.name.lexeme exist(meme is la valeur est FALSE), c'est une erreur
       //? car expr.name.lexeme est le nom de la variable
       //? https://craftinginterpreters.com/resolving-and-binding.html#resolving-variable-expressions

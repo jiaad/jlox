@@ -7,6 +7,8 @@ import java.util.List;
 // import com.craftinginterpreters.lox.Stmt.Return;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   private static class BreakException extends RuntimeException {}
 
@@ -31,6 +33,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   final Environment globals = new Environment();
   private Environment environment = globals;
+  private final Map<Expr, Integer> locals = new HashMap<Expr, Integer>();
 
   void interpreter(List<Stmt> statements){
     try {
@@ -44,6 +47,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   private void execute(Stmt stmt){
     stmt.accept(this);
+  }
+
+  public void resolve(Expr expr, int depth){
+    // only local variables
+    // globals don't end up in the map
+    locals.put(expr, depth);
   }
 
   private String stringify(Object object){
@@ -138,7 +147,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Object visitVariableExpr(Expr.Variable expr){
-    return environment.get(expr.name);
+    // avant: return environment.get(expr.name);
+    return lookupVariable(expr.name, expr);
+  }
+
+  private Object lookupVariable(Token name, Expr expr){
+    // we resolve local variable
+    // if it is not local || no distance it is global
+    Integer distance = locals.get(expr);
+    if(distance != null){
+      // it means we got the result
+      return environment.getAt(distance, name.lexeme);
+    }else{
+      return globals.get(name);
+    }
   }
 
   @Override
@@ -244,7 +266,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitAssignExpr(Expr.Assign expr){
     Object value = evaluate(expr.value);
-    environment.assign(expr.name, value);
+
+    Integer distance = locals.get(expr);
+    if(distance != null){
+      environment.assignAt(distance, expr.name, value);
+    } else {
+      environment.assign(expr.name, value);
+    }
     return value;
   }
 

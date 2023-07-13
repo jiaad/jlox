@@ -52,6 +52,12 @@ public class Lox {
     if(hadError) return;
     System.out.println(statements);
     // System.out.println(new AstPrinter().print(expression));
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
+    
+    
+    if(hadError) return;
+    //interpreter
     interpreter.interpreter(statements);
     // for (Token token : tokens) {
     //   System.out.println(token);
@@ -70,7 +76,7 @@ public class Lox {
   }
 
   private static void report(int line, String where, String message){
-    System.err.println("[line " + line + "] Error " + where + ":" + message);
+    System.err.println("[line " + line + "] Error " + where + " : " + message);
     hadError = true;
   }
 

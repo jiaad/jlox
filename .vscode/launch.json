@@ -29,8 +29,21 @@
       "projectName": "jlox_7dfec56e",
       "args": 
       [
-          "./test.jlox"
+          "./langtest/test.jlox"
       ],
+      "stepFilters": {
+        "classNameFilters": [
+            "java.*",
+            "javax.*",
+            "com.sun.*",
+            "sun.*",
+            "sunw.*",
+            "org.omg.*"
+        ],
+        "skipSynthetics": false,
+        "skipStaticInitializers": false,
+        "skipConstructors": false
+      },
     },
     {
       "type": "java",
