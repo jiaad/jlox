@@ -10,11 +10,14 @@
 // scope(12);
 
 var a = "outer";
+var b = "bouter";
 {
   var b = "jiad";
   {
     var c = b;
+    var d = "lol";
+    var e = c;
     print b;
   }
-  // var a = a;
+  var z = c;
 }

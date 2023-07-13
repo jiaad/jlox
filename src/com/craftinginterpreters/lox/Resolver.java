@@ -10,10 +10,25 @@ import java.util.Stack;
  */
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
-  private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+  private final Stack<Map<String, Variable>> scopes = new Stack<>();
   private FunctionType currentFunction = FunctionType.NONE;
 
   private boolean inLoop = false;
+
+
+  private static class Variable {
+    final Token name;
+    VariableState state;
+    private Variable(Token name, VariableState state){
+      this.name = name;
+      this.state = state;
+    }
+  }
+
+  private enum VariableState {
+    DECLARED, DEFINED, READ
+  }
+
   Resolver(Interpreter interpreter){
     this.interpreter = interpreter;
   }
@@ -39,10 +54,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   private void beginScope(){
-    scopes.push(new HashMap<String, Boolean>());
+    scopes.push(new HashMap<String, Variable>());
   }
   private void endScope(){
-    scopes.pop();
+    Map<String, Variable> scope = scopes.pop();
+
+    for (Map.Entry<String, Variable> entry : scope.entrySet()) {
+      if(entry.getValue().state == VariableState.DEFINED){
+          Lox.error(entry.getValue().name, "Local variable is not used.");
+      }
+    }
   }
   private void resolveParameters(List<Token> tokens){
     for(Token token: tokens){
@@ -71,21 +92,21 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     
     if(scopes.empty()) return; // if not inside a block scope
     
-    Map<String, Boolean> scope = scopes.peek();
+    Map<String, Variable> scope = scopes.peek();
     if(scope.containsKey(name.lexeme)){
       Lox.error(name, "Already a variable with this name in this scope.");
     }
-    scope.put(name.lexeme, false);
+    scope.put(name.lexeme, new Variable(name, VariableState.DECLARED));
   }
 
-  private void define(Token token){
+  private void define(Token name){
     //? after declaring the variable, we resolove its initializer expression
     //? it is done 
     if(scopes.empty()) return;
-    scopes.peek().put(token.lexeme, true);
+    scopes.peek().put(name.lexeme, new Variable(name, VariableState.DECLARED));
   }
 
-  private void resolveLocal(Expr expr, Token name){
+  private void resolveLocal(Expr expr, Token name, boolean isRead){
     //! if we don't find anything in the scope, we assune it is global
     for(int i = scopes.size() - 1; i >= 0; i--){
       if(scopes.get(i).containsKey(name.lexeme)){
@@ -97,6 +118,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         //? 15 - 15 = 0
         //? if it si qt the enclosing scope it will be 1 then 2 then 3 etc...
         interpreter.resolve(expr, scopes.size() - 1 - i); //? we will push to the interperter locals
+
+        if(isRead){
+          scopes.get(i).get(name.lexeme).state = VariableState.READ;
+        }
         return;
       }
     }
@@ -226,21 +251,21 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   @Override
   public Void visitAssignExpr(Expr.Assign expr){
     resolve(expr.value);
-    resolveLocal(expr, expr.name);
+    resolveLocal(expr, expr.name, false);
     return null;
   }
 
   //! resolving variables
   @Override
   public Void visitVariableExpr(Expr.Variable expr){
-    if(!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE){
+    if(!scopes.isEmpty() && scopes.peek().containsKey(expr.name.lexeme) && scopes.peek().get(expr.name.lexeme).state == VariableState.DECLARED){
       //?? i understood, si le expr.name.lexeme exist(meme is la valeur est FALSE), c'est une erreur
       //? car expr.name.lexeme est le nom de la variable
       //? https://craftinginterpreters.com/resolving-and-binding.html#resolving-variable-expressions
       Lox.error(expr.name, "can't read local variable in it's own initializer");
     }
 
-    resolveLocal(expr, expr.name);
+    resolveLocal(expr, expr.name, true);
     return null;
   }
 
