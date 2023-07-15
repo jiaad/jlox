@@ -119,13 +119,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Void visitClassStmt(Stmt.Class stmt){
     environment.define(stmt.name.lexeme, null);
-    LoxClass klass = new LoxClass(stmt.name.lexeme);
-    environment.assign(stmt.name, klass);
     /*
-     * first we define
+    * first we define
      * then we assign
      * this two-stages var binding process helps us to refereneces to the xlass inside its own methods
      */
+    
+    Map<String, LoxFunction> methods = new HashMap<>();
+    for (Stmt.Function method : stmt.methods) {
+      LoxFunction function = new LoxFunction(method.name.lexeme, method.function, environment);
+      methods.put(method.name.lexeme, function);
+    }
+    
+    LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+    environment.assign(stmt.name, klass);
+
     return null;
   }
   @Override

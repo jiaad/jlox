@@ -10,11 +10,12 @@ class Breakfast {
 
 print Breakfast;
 var bagel = Breakfast();
+var eggs = Breakfast();
+eggs.serve("jiad");
+bagel.cook();
+
 
 bagel.name = "jiad";
 print bagel.name;
-// fun a(){ return b();}
-// fun b(){print "jiad"; return a();}
-// a();
 
-/// asignment -> (call ".")? IDENTIOFIER "=" assignment | LOGIC_OR
+

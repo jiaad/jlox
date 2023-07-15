@@ -75,12 +75,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private void resolveFunction(Stmt.Function stmt, FunctionType type){
     FunctionType enclosingFunction = currentFunction;
     this.currentFunction = type;
+
     beginScope();
-      // for(Token token : stmt.function.params){
-      //   declare(token);
-      //   define(token);
-      // }
-      resolveParameters(stmt.function.params);
+      for(Token token: stmt.function.params){
+        declare(token);
+        define(token);
+      }
       resolve(stmt.function.body);
     endScope();
     this.currentFunction = enclosingFunction;
@@ -103,7 +103,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     //? after declaring the variable, we resolove its initializer expression
     //? it is done 
     if(scopes.empty()) return;
-    scopes.peek().put(name.lexeme, new Variable(name, VariableState.DECLARED));
+    scopes.peek().put(name.lexeme, new Variable(name, VariableState.DEFINED));
   }
 
   private void resolveLocal(Expr expr, Token name, boolean isRead){
@@ -138,6 +138,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   public Void visitClassStmt(Stmt.Class stmt){
     declare(stmt.name);
     define(stmt.name);
+    for (Stmt.Function method : stmt.methods) {
+      FunctionType declaration = FunctionType.METHOD;
+      resolveFunction(method, declaration);
+    }
   
     return null;
   }
@@ -291,7 +295,10 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override 
   public Void visitFunctionExpr(Expr.Function expr){
-    resolveParameters(expr.params);
+    for(Token token: expr.params){
+        declare(token);
+        define(token);
+      }
     resolve(expr.body);
     return null;
   }

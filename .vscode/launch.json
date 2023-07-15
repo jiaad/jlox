@@ -29,7 +29,7 @@
       "projectName": "jlox_7dfec56e",
       "args": 
       [
-          "./langtest/test.jlox"
+          "./langtest/class.jlox"
       ],
       "stepFilters": {
         "classNameFilters": [
