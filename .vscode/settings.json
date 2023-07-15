@@ -11,6 +11,6 @@
         "cstdio": "c",
         "queue": "c",
         "random": "c",
-        "*.jlox": "c"
+        "*.jlox": "lox"
     }
 }

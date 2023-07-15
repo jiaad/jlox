@@ -1,0 +1,20 @@
+class Breakfast {
+  cook() {
+    print "Eggs a-fryin'!";
+  }
+
+  serve(who) {
+    print "Enjoy your breakfast, " + who + ".";
+  }
+}
+
+print Breakfast;
+var bagel = Breakfast();
+
+bagel.name = "jiad";
+print bagel.name;
+// fun a(){ return b();}
+// fun b(){print "jiad"; return a();}
+// a();
+
+/// asignment -> (call ".")? IDENTIOFIER "=" assignment | LOGIC_OR
